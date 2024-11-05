@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeRunner Chrome</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #121212;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* Tabs Styles */
+    .tabs {
+      display: flex;
+      justify-content: space-evenly;
+      background-color: #1f1f1f;
+      padding: 10px 0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      border-bottom: 2px solid #444;
+    }
+
+    .tabs button {
+      background-color: transparent;
+      border: none;
+      color: #bbb;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 18px;
+      transition: color 0.3s ease, border-bottom 0.3s ease;
+      outline: none;
+      border-bottom: 2px solid transparent;
+    }
+
+    .tabs button:hover, .tabs button.active {
+      color: #32CD32;
+      border-bottom: 2px solid #32CD32;
+    }
+
+    /* Section Styles */
+    .tab-content {
+      display: none;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .tab-content.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    h1 {
+      font-size: 48px;
+      margin-bottom: 20px;
+      color: #fff;
+      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    p {
+      font-size: 20px;
+      color: #bbb;
+      line-height: 1.6;
+    }
+
+    /* Converter Tab Styles */
+    .converter-container {
+      display: flex;
+      height: calc(100vh - 80px); /* Adjust height to account for tabs */
+      border-top: 1px solid #444;
+      transition: all 0.3s ease;
+    }
+
+    .converter-side {
+      width: 50%;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .converter-side.left {
+      border-right: 1px solid #444;
+      text-align: left;
+    }
+
+    .converter-side.right {
+      text-align: right;
+    }
+
+    .dropdown, .convert-btn {
+      background-color: #1f1f1f;
+      color: #fff;
+      padding: 10px;
+      border: 1px solid #444;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-right: 10px;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+
+    .dropdown {
+      width: auto;
+      flex: 1;
+    }
+
+    .convert-btn {
+      flex-shrink: 0;
+    }
+
+    .dropdown:hover, .convert-btn:hover {
+      background-color: #32CD32;
+    }
+
+    .console-bubble {
+      width: 100%;
+      height: calc(100% - 50px); /* Adjust height to leave space for buttons */
+      padding: 15px;
+      background-color: #1f1f1f;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 16px;
+      resize: none;
+      overflow-y: auto;
+      transition: background-color 0.3s ease;
+    }
+
+    .console-bubble:focus {
+      background-color: #333;
+    }
+
+    .converter-controls {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    /* Builder Tab Styles */
+    .builder-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 80px); /* Adjust height to account for tabs */
+    }
+
+    .builder-console {
+      flex: 1;
+      padding: 15px;
+      background-color: #1f1f1f;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 16px;
+      resize: none;
+      overflow-y: auto;
+      margin-bottom: 60px; /* Space for the button */
+      transition: background-color 0.3s ease;
+    }
+
+    .builder-console:focus {
+      background-color: #333;
+    }
+
+    .builder-btn {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background-color: #1f1f1f;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 5px;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .builder-btn:hover {
+      background-color: #32CD32;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Preview Tab Styles */
+    .preview-container {
+      text-align: center;
+      position: relative;
+    }
+
+    .preview-btn {
+      background-color: #1f1f1f;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 5px;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      margin-bottom: 20px;
+    }
+
+    .preview-btn:hover {
+      background-color: #32CD32;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Download Tab Styles */
+    .download-controls {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .download-controls select, .download-controls button {
+      background-color: #1f1f1f;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 5px;
+      padding: 10px;
+      font-size: 16px;
+      margin-right: 10px;
+      transition: background-color 0.3s ease;
+    }
+
+    .download-controls button {
+      cursor: pointer;
+    }
+
+    .download-controls select {
+      flex: 1;
+    }
+
+    .download-controls button:hover {
+      background-color: #32CD32;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-link" onclick="openTab('welcome')">Welcome!</button>
+    <button class="tab-link" onclick="openTab('builder')">Builder</button>
+    <button class="tab-link" onclick="openTab('converter')">Converter</button>
+    <button class="tab-link" onclick="openTab('preview')">Preview</button>
+    <button class="tab-link" onclick="openTab('download')">Download</button>
+  </div>
+
+  <!-- Tab Content -->
+  <div id="welcome" class="tab-content active">
+    <h1>Welcome to codeRunner browser.</h1>
+    <p>Start by Opening one of the tabs on the top.</p>
+  </div>
+
+  <div id="builder" class="tab-content">
+    <h1>Builder Section</h1>
+    <p>This section allows you to build and customize your code.</p>
+
+    <div class="builder-container">
+      <textarea id="builder-console" class="builder-console" placeholder="Type your code here..."></textarea>
+      <button class="builder-btn" onclick="openTab('preview')">Preview</button>
+    </div>
+  </div>
+
+  <div id="converter" class="tab-content">
+    <h1>Converter Section</h1>
+    <p>Convert code between different languages.</p>
+
+    <div class="converter-container">
+      <!-- Left Side (Conversion Output) -->
+      <div class="converter-side left">
+        <div class="converter-controls">
+          <select id="convert-from" class="dropdown">
+            <option value="html">HTML</option>
+            <option value="js">JavaScript</option>
+            <option value="ts">TypeScript</option>
+            <option value="cpp">C++</option>
+          </select>
+          <select id="convert-to" class="dropdown">
+            <option value="html">HTML</option>
+            <option value="js">JavaScript</option>
+            <option value="ts">TypeScript</option>
+            <option value="cpp">C++</option>
+          </select>
+          <button class="convert-btn" onclick="convertCode()">Convert</button>
+        </div>
+        <textarea id="converter-output" class="console-bubble" placeholder="Converted code will appear here..."></textarea>
+      </div>
+
+      <!-- Right Side (Input Code) -->
+      <div class="converter-side right">
+        <textarea id="converter-input" class="console-bubble" placeholder="Type your code here..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div id="preview" class="tab-content">
+    <h1>Preview Section</h1>
+    <p>Write your code and preview it in fullscreen mode.</p>
+
+    <div class="controls">
+      <select id="language-select-preview" class="dropdown">
+        <option value="html">HTML</option>
+        <option value="js">JavaScript</option>
+        <option value="ts">TypeScript</option>
+        <option value="cpp">C++</option>
+      </select>
+      <button class="preview-btn" onclick="runPreview()">Run Preview</button>
+    </div>
+
+    <textarea id="preview-code-area" class="console-bubble" placeholder="Type your script here..."></textarea>
+  </div>
+
+  <div id="download" class="tab-content">
+    <h1>Download Section</h1>
+    <p>Select a language and download the code you've typed in the console.</p>
+
+    <div class="download-controls">
+      <select id="download-language" class="dropdown">
+        <option value="html">HTML</option>
+        <option value="js">JavaScript</option>
+        <option value="ts">TypeScript</option>
+        <option value="cpp">C++</option>
+      </select>
+      <button class="download-btn" onclick="downloadCode()">Download</button>
+    </div>
+
+    <textarea id="download-code" class="console-bubble" placeholder="Type your code here..."></textarea>
+  </div>
+
+  <script>
+    // Function to switch tabs
+    function openTab(tabId) {
+      const tabs = document.querySelectorAll('.tab-content');
+      tabs.forEach(tab => tab.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+
+      const buttons = document.querySelectorAll('.tabs button');
+      buttons.forEach(button => button.classList.remove('active'));
+      document.querySelector(`.tabs button[onclick="openTab('${tabId}')"]`).classList.add('active');
+    }
+
+    // Function to download code
+    function downloadCode() {
+      const code = document.getElementById('download-code').value;
+      const language = document.getElementById('download-language').value;
+      const fileExtension = language === 'html' ? 'html' :
+                            language === 'js' ? 'js' :
+                            language === 'ts' ? 'ts' :
+                            'cpp';
+      const blob = new Blob([code], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `code.${fileExtension}`;
+      link.click();
+    }
+
+    // Function to run and preview code
+    function runPreview() {
+      const code = document.getElementById('preview-code-area').value;
+      const language = document.getElementById('language-select-preview').value;
+      let htmlContent = '';
+
+      if (language === 'html') {
+        htmlContent = code;
+      } else if (language === 'js' || language === 'ts') {
+        htmlContent = `<html><body><script>${code}<\/script></body></html>`;
+      } else if (language === 'cpp') {
+        htmlContent = `<html><body><h1>C++ preview is not supported in browser</h1></body></html>`;
+      }
+
+      const previewWindow = window.open('', '', 'fullscreen=yes');
+      previewWindow.document.open();
+      previewWindow.document.write(htmlContent);
+      previewWindow.document.close();
+    }
+
+    // Function to convert code (stub implementation)
+    function convertCode() {
+      const inputCode = document.getElementById('converter-input').value;
+      const convertFrom = document.getElementById('convert-from').value;
+      const convertTo = document.getElementById('convert-to').value;
+
+      // This is a stub implementation
+      // Replace this with actual conversion logic
+      document.getElementById('converter-output').value = `Converted ${convertFrom} code to ${convertTo}:\n${inputCode}`;
+    }
+  </script>
+
+</body>
+</html>
